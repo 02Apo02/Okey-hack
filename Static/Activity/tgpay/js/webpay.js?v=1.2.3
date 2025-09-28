@@ -1,0 +1,183 @@
+$(function () {
+    Activity.init();
+});
+
+var Activity = {
+    isLogin: false,
+    is_query: false,
+    gid: 0,
+    init: function () {
+        Activity.initEvent();
+        Activity.mall();
+        Activity.exs();
+    },
+    initEvent: function () {
+        $(".input_butoon").on("click", function () {
+            if (!$('#txt_id').val()) {
+                layer.msg("Lütfen yükleme yapacağınız kullanıcı id'ini girin");
+                return;
+            }
+            Activity.infos($("#txt_id").val());
+        });
+        $("#txt_id").on("click", function () {
+            Activity.is_query = true;
+        });
+    },
+    infos: function (uid = 0) {
+        $.ajax({
+            type: "post",
+            url: "/webpay/info",
+            dataType: "json",
+            data: { uid: uid },
+            success: function (res) {
+                Activity.is_query = false;
+                if (res.status == 0) {
+                    Activity.gid = 0;
+                    Activity.isLogin = false;
+                    layer.msg(res.info);
+                    $(".div_bouns_w p").html("Giriş yapmadınız");
+                    $(".div_bouns_w img").attr("src", "/Static/Activity/tgpay/images/icon.png");
+                    return;
+                }
+                Activity.isLogin = true;
+                Activity.gid = res.data.gid;
+                $(".div_bouns_w p").html(res.data.nickname);
+                $(".div_bouns_w img").attr("src", img_url + '/face/' + res.data.face_md5);
+                $(".div_infos").show();
+            }
+        });
+    },
+    exs: function () {
+        $.ajax({
+            type: "post",
+            url: "/webpay/exs",
+            dataType: "json",
+            success: function (res) {
+                if (res.status == 0) {
+                    return;
+                }
+                $(".div_lun").show();
+                if (res.data.length > 10) {
+                    $("#div_lun").html(res.data);
+                    $('#marquee_box1').liMarquee({
+                        direction: 'left',
+                        circular: "off"
+                    });
+                }
+            }
+        });
+    },
+    mall: function () {
+        $.ajax({
+            type: "post",
+            url: "/webpay/mall",
+            dataType: "json",
+            success: function (res) {
+                if (res == null) {
+                    return;
+                }
+                var list = res.data;
+                var html = "";
+                for (var key in list) {
+                    var res = list[key]
+                        , mall_id = res['mall_id']
+                        , goods_name = res['goods_name']
+                        , price = res['price']
+                        , discount = res['discount']
+                        , thumb_icon = res['thumb_icon']
+                        , type_id = res['type_id']
+                        , top_recommend = res['top_recommend'];
+                    html += '<div data-v-68d9b970="" class="Mall-cell" data-gid="' + mall_id + '" data-tid="' + type_id + '" data-gname="' + goods_name + '" data-gprice="' + price + '" data-gdiscount="' + discount + '" data-gicon="' + thumb_icon + '">';
+                    html += '     <div data-v-68d9b970="" class="discount">';
+                    html += '         ' + discount + '%+';
+                    html += '     </div>'
+                    html += '     <p data-v-68d9b970="" class="new_numb">'
+                    html += '         ' + goods_name;
+                    html += '         <img data-v-68d9b970="" src="/Static/Activity/tgpay/images/b.png" alt="" style="width: 1.3rem;">';
+                    html += '     </p>';
+                    html += '     <div data-v-68d9b970="" class="old_numb">';
+                    html += '         <p data-v-68d9b970="" style="color: #e35757;">';
+                    html += '             ' + (Math.round(price * 10000));
+                    html += '         </p>';
+                    html += '     </div><img data-v-68d9b970=""';
+                    html += '         src="' + img_url + '/mall/' + thumb_icon + '" alt="" style="width: 40%;height: 40%;"><div class="p_fff" style="font-size: 0.9rem;padding-top: 0.5rem;cursor: pointer;">';
+                    html += '         ' + price + ' TRY';
+                    html += '     </div>';
+                    html += ' </div>';
+                }
+                $('.Mallbox .Mall').html(html);
+                $('.Mallbox .Mall .Mall-cell').on('click', function () {
+                    if (Activity.is_query)
+                        return
+
+                    if (!$('#txt_id').val()) {
+                        layer.msg("Lütfen yükleme yapacağınız kullanıcı id'ini girin");
+                        return;
+                    }
+                    if (!Activity.isLogin) {
+                        layer.msg("Kullanıcı bilgileri mevcut değil");
+                        return;
+                    }
+                    var _this = $(this);
+                    layer.confirm('Mevcut yükleme id:' + $('#txt_id').val(), {
+                        title: "",
+                        btn: ['Onayla', 'İptal et']
+                    }, function () {
+                        layer.close(layer.index);
+                        var mask_html = '';
+                        mask_html += ' <div data-v-62cdb366="" class="mainBox">';
+                        mask_html += '     <div data-v-62cdb366="" class="mainBoxHeader"></div>';
+                        if (_this.data('gdiscount') > 0) {
+                            mask_html += '     <div data-v-62cdb366="" class="discount">';
+                            mask_html += '         <img data-v-62cdb366="" width="100%" src="/Static/Activity/tgpay/images/banner_red.png" alt="">';
+                            mask_html += '         <p data-v-62cdb366="">' + _this.data('gdiscount') + '%</p>';
+                            mask_html += '     </div>';
+                        }
+                        mask_html += '     <img data-v-62cdb366="" src="/Static/Activity/tgpay/images/close.png" alt="" class="close" onclick="Activity.maskClose()">';
+                        mask_html += '     <img data-v-62cdb366="" src="' + img_url + '/mall/' + _this.data('gicon') + '" alt="" style="width: 40%; margin-top: 1.8rem;">';
+                        mask_html += '     <div data-v-62cdb366="">';
+                        mask_html += '         <p data-v-62cdb366="" class="new_numb">';
+                        mask_html += '             ' + _this.data('gname');
+                        mask_html += '             <img data-v-62cdb366="" src="/Static/Activity/tgpay/images/b.png" alt="" style="width: 2.2rem;">';
+                        mask_html += '         </p>';
+                        mask_html += '         <div data-v-62cdb366="" class="old_numb">';
+                        mask_html += '             <p data-v-62cdb366="">';
+                        mask_html += '                 ' + (Math.round(_this.data('gprice') * 10000));
+                        mask_html += '             </p>';
+                        mask_html += '         </div>';
+                        mask_html += '     </div><br data-v-62cdb366="">';
+                        mask_html += '     <p data-v-62cdb366="" class="price">' + _this.data('gprice') + ' TRY</p>';
+                        mask_html += '     <button data-v-62cdb366="" class="btn" onclick="Activity.order(\'mask[data-v-62cdb366]\',' + _this.data('gid') + ',' + _this.data('gname') + ',1,' + _this.data('tid') + ')">Yükleme indirimi</button>';
+                        mask_html += '     <button data-v-62cdb366="" class="btnpapar" onclick="Activity.order(\'mask[data-v-62cdb366]\',' + _this.data('gid') + ',' + _this.data('gname') + ',2,' + _this.data('tid') + ')">Papara</button>';
+                        mask_html += ' </div>';
+
+                        $('.mask[data-v-62cdb366]').html(mask_html).show();
+                    });
+                });
+            }
+        });
+    },
+    maskClose: function () {
+        $('.mask[data-v-62cdb366]').html('').hide();
+    },
+    order: function (send, goods_id, goods_name, pid, tid) {
+        Activity.maskClose();
+        $('.mask[data-v-eeba1b84]').show();
+        $.ajax({
+            type: "post",
+            url: "/webpay/order",
+            data: { "goods_id": goods_id, "goods_name": goods_name, "pid": pid, uid: $('#txt_id').val(), gid: Activity.gid, tid: tid },
+            dataType: "json",
+            success: function (res) {
+                if (res.status == 0) {
+                    layer.msg(res.info);
+                    $('.mask[data-v-eeba1b84]').hide();
+                    return;
+                }
+                window.location.href = res.url;
+            }
+        });
+
+
+    }
+};
