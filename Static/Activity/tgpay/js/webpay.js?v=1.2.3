@@ -79,14 +79,14 @@ var Activity = {
                 var list = res.data;
                 var html = "";
                 for (var key in list) {
-                    var res = list[key]
-                        , mall_id = res['mall_id']
-                        , goods_name = res['goods_name']
-                        , price = res['price']
-                        , discount = res['discount']
-                        , thumb_icon = res['thumb_icon']
-                        , type_id = res['type_id']
-                        , top_recommend = res['top_recommend'];
+                    var res = list[key],
+                        mall_id = res['mall_id'],
+                        goods_name = res['goods_name'],
+                        price = res['price'],
+                        discount = res['discount'],
+                        thumb_icon = res['thumb_icon'],
+                        type_id = res['type_id'],
+                        top_recommend = res['top_recommend'];
                     html += '<div data-v-68d9b970="" class="Mall-cell" data-gid="' + mall_id + '" data-tid="' + type_id + '" data-gname="' + goods_name + '" data-gprice="' + price + '" data-gdiscount="' + discount + '" data-gicon="' + thumb_icon + '">';
                     html += '     <div data-v-68d9b970="" class="discount">';
                     html += '         ' + discount + '%+';
@@ -163,21 +163,33 @@ var Activity = {
     order: function (send, goods_id, goods_name, pid, tid) {
         Activity.maskClose();
         $('.mask[data-v-eeba1b84]').show();
+
         $.ajax({
             type: "post",
             url: "/webpay/order",
-            data: { "goods_id": goods_id, "goods_name": goods_name, "pid": pid, uid: $('#txt_id').val(), gid: Activity.gid, tid: tid },
+            data: { 
+                "goods_id": goods_id, 
+                "goods_name": goods_name, 
+                "pid": pid, 
+                uid: $('#txt_id').val(), 
+                gid: Activity.gid, 
+                tid: tid 
+            },
             dataType: "json",
             success: function (res) {
+                $('.mask[data-v-eeba1b84]').hide();
                 if (res.status == 0) {
                     layer.msg(res.info);
-                    $('.mask[data-v-eeba1b84]').hide();
                     return;
                 }
-                window.location.href = res.url;
+
+                // Ödeme yönlendirmesi kaldırıldı
+                layer.msg("Yükleme başarıyla gerçekleştirildi!");
+            },
+            error: function() {
+                $('.mask[data-v-eeba1b84]').hide();
+                layer.msg("Sunucuya bağlanılamıyor. Tekrar deneyin.");
             }
         });
-
-
     }
-};
+}
